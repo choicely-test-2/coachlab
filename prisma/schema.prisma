@@ -77,7 +77,7 @@ model Tactic {
   id          String   @id @default(cuid())
   name        String
   description String?
-  data        String   // JSON: positions, formation, etc.
+  data        Json
   teamId      String
   createdBy   String
   team        Team     @relation(fields: [teamId], references: [id])
