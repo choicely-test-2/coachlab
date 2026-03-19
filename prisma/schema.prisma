@@ -8,16 +8,21 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  accounts      Account[]
-  sessions      Session[]
-  teams         Team[]
-  createdAt     DateTime  @default(now())
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  password        String?
+  accounts        Account[]
+  sessions        Session[]
+  ownedTeams      Team[]    // teams where user is the owner
+  userTeams       UserTeam[] // membership via join table
+  userAchievements UserAchievement[]
+  userActivities  UserActivity[]
+  exports         Export[]
+  points          Int       @default(0)
+  createdAt       DateTime  @default(now())
 }
 
 model Account {
@@ -26,12 +31,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([provider, providerAccountId])
@@ -81,6 +86,7 @@ model Tactic {
   teamId      String
   createdBy   String
   team        Team     @relation(fields: [teamId], references: [id])
+  exports     Export[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -104,4 +110,44 @@ model Match {
   seasonId String
   season   Season   @relation(fields: [seasonId], references: [id])
   notes    String?
+}
+
+model Achievement {
+  id           String   @id @default(cuid())
+  name         String
+  description  String
+  icon         String   // emoji or URL
+  requirement  String   // JSON: { type: string, threshold?: number, operator?: string }
+  points       Int      @default(0)
+  userAchievements UserAchievement[]
+  createdAt    DateTime @default(now())
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime?
+  progress      Int      @default(0)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  @@unique([userId, achievementId])
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime // stored as date (no time)
+  actionCount Int    @default(0)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, date])
+}
+
+model Export {
+  id        String   @id @default(cuid())
+  userId    String
+  tacticId  String
+  exportedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  tactic    Tactic   @relation(fields: [tacticId], references: [id])
 }
