@@ -21,14 +21,28 @@ export default function TeamTacticsPage() {
   const [formationName, setFormationName] = useState('');
   const [formationData, setFormationData] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   // Fetch tactics on load
   useEffect(() => {
+    setLoading(true);
     fetch(`/api/teams/${teamId}/tactics`)
-      .then(res => res.json())
-      .then(data => setTactics(Array.isArray(data) ? data : []));
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch tactics');
+        return res.json();
+      })
+      .then(data => {
+        setTactics(Array.isArray(data) ? data : []);
+        setError(null);
+      })
+      .catch(err => {
+        setError(err.message);
+        setTactics([]);
+      })
+      .finally(() => setLoading(false));
   }, [teamId]);
 
   const handleSave = async () => {
@@ -116,18 +130,24 @@ export default function TeamTacticsPage() {
             {/* Tactics list */}
             <div className="bg-white pa3 br2 shadow-1">
               <h2 className="f5 fw6 mb2">Saved Tactics</h2>
-              <ul>
-                {tactics.map(t => (
-                  <li key={t.id} className="mb2">
-                    <button
-                      className={`blue pointer ${selectedTactic?.id === t.id ? 'b fw6' : ''}`}
-                      onClick={() => setSelectedTactic(t)}
-                    >
-                      {t.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              {loading ? (
+                <p>Loading...</p>
+              ) : error ? (
+                <p className="red">Error: {error}</p>
+              ) : (
+                <ul>
+                  {tactics.map(t => (
+                    <li key={t.id} className="mb2">
+                      <button
+                        className={`blue pointer ${selectedTactic?.id === t.id ? 'b fw6' : ''}`}
+                        onClick={() => setSelectedTactic(t)}
+                      >
+                        {t.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             {/* Editor */}
