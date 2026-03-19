@@ -8,7 +8,7 @@
 - [x] Add TODO.md and open PR #3
 
 ## Roadmap (mirrors README.md)
-- [ ] Basic tactic board with draggable players
+- [x] Basic tactic board with draggable players
 - [ ] Season planner with calendar view
 - [ ] Achievement system (streaks, badges)
 - [ ] Team sharing and collaboration
