@@ -55,8 +55,8 @@ Open http://localhost:3000 in your browser.
 
 ## Roadmap
 
-- [ ] Basic tactic board with draggable players
-- [ ] Season planner with calendar view
+- [x] Basic tactic board with draggable players
+- [x] Season planner with calendar view
 - [ ] Achievement system (streaks, badges)
 - [ ] Team sharing and collaboration
 - [ ] Export tactics as images/PDF
