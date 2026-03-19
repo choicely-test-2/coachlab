@@ -126,6 +126,9 @@ export async function DELETE(
     return NextResponse.json({ error: 'Season not found' }, { status: 404 });
   }
 
+  // Cascade delete all matches belonging to this season
+  await prisma.match.deleteMany({ where: { seasonId: params.seasonId } });
+
   await prisma.season.delete({ where: { id: params.seasonId } });
 
   return NextResponse.json({ success: true });
