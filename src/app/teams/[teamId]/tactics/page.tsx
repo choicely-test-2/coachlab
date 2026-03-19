@@ -21,6 +21,8 @@ export default function TeamTacticsPage() {
   const [formationName, setFormationName] = useState('');
   const [formationData, setFormationData] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   // Fetch tactics on load
   useEffect(() => {
@@ -58,8 +60,9 @@ export default function TeamTacticsPage() {
     }
   };
 
-  // Basic drag-and-drop simulation: click to add, drag to move
+  // Basic drag-and-drop: click to add player, drag to move
   const handleFieldClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (draggingId) return;
     if (!formationData) setFormationData({ positions: [], formation: 'custom' });
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -71,13 +74,31 @@ export default function TeamTacticsPage() {
     }));
   };
 
-  const handlePosDrag = (id: string, dx: number, dy: number) => {
+  const handlePlayerMouseDown = (e: React.MouseEvent, pos: any) => {
+    e.stopPropagation();
+    const playerRect = (e.target as HTMLElement).getBoundingClientRect();
+    setDraggingId(pos.id);
+    setDragOffset({
+      x: e.clientX - playerRect.left,
+      y: e.clientY - playerRect.top,
+    });
+  };
+
+  const handleFieldMouseMove = (e: React.MouseEvent) => {
+    if (!draggingId || !formationData) return;
+    const fieldRect = e.currentTarget.getBoundingClientRect();
+    const newX = e.clientX - fieldRect.left - dragOffset.x;
+    const newY = e.clientY - fieldRect.top - dragOffset.y;
     setFormationData(prev => ({
       ...prev,
       positions: prev.positions.map((p: any) =>
-        p.id === id ? { ...p, x: p.x + dx, y: p.y + dy } : p
+        p.id === draggingId ? { ...p, x: newX, y: newY } : p
       ),
     }));
+  };
+
+  const handleFieldMouseUp = () => {
+    setDraggingId(null);
   };
 
   return (
@@ -126,6 +147,9 @@ export default function TeamTacticsPage() {
                 className="relative ba bg-green-muted"
                 style={{ width: '100%', height: '400px' }}
                 onClick={handleFieldClick}
+                onMouseMove={handleFieldMouseMove}
+                onMouseUp={handleFieldMouseUp}
+                onMouseLeave={handleFieldMouseUp}
               >
                 {formationData?.positions?.map((pos: any) => (
                   <div
@@ -138,25 +162,9 @@ export default function TeamTacticsPage() {
                       left: pos.x - 16,
                       top: pos.y - 16,
                       cursor: 'move',
+                      zIndex: draggingId === pos.id ? 10 : 1,
                     }}
-                    draggable
-                    onDragOver={e => e.preventDefault()}
-                    onDrop={e => {
-                      e.preventDefault();
-                      const dropX = e.clientX - e.currentTarget.parentElement.getBoundingClientRect().left;
-                      const dropY = e.clientY - e.currentTarget.parentElement.getBoundingClientRect().top;
-                      // Not ideal; for simplicity we just update on drop for that player
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const offsetX = (e.nativeEvent as any).dataTransfer?.getData('offsetX');
-                      // simplified: just update to drop position
-                      // In production, use proper Drag & Drop APIs
-                      setFormationData(prev => ({
-                        ...prev,
-                        positions: prev.positions.map((p: any) =>
-                          p.id === pos.id ? { ...p, x: dropX, y: dropY } : p
-                        ),
-                      }));
-                    }}
+                    onMouseDown={(e) => handlePlayerMouseDown(e, pos)}
                   >
                     {pos.label}
                   </div>
