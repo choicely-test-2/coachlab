@@ -9,7 +9,7 @@
 
 ## Roadmap (mirrors README.md)
 - [x] Basic tactic board with draggable players
-- [ ] Season planner with calendar view
+- [x] Season planner with calendar view
 - [ ] Achievement system (streaks, badges)
 - [ ] Team sharing and collaboration
 - [ ] Export tactics as images/PDF
@@ -29,8 +29,8 @@
 - [ ] Environment/config for SQLite (dev) and Postgres (prod)
 
 ### Core Features
-- [ ] Tactic board — canvas/drag-drop, player positioning, formations
-- [ ] Season planner — calendar/schedule UI, match planning, lineup builder
+- [x] Tactic board — canvas/drag-drop, player positioning, formations
+- [x] Season planner — calendar/schedule UI, match planning, lineup builder
 - [ ] Session planning and logging — drills, objectives, outcomes
 - [ ] Player development tracking — attributes, progress over time
 - [ ] Export tactics as images/PDF
