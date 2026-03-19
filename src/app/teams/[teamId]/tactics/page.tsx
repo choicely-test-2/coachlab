@@ -12,6 +12,18 @@ interface Tactic {
   updatedAt: string;
 }
 
+interface Position {
+  id: string;
+  x: number;
+  y: number;
+  label: string;
+}
+
+interface FormationData {
+  positions: Position[];
+  formation?: string;
+}
+
 export default function TeamTacticsPage() {
   const params = useParams();
   const teamId = params.teamId as string;
@@ -19,7 +31,7 @@ export default function TeamTacticsPage() {
   const [tactics, setTactics] = useState<Tactic[]>([]);
   const [selectedTactic, setSelectedTactic] = useState<Tactic | null>(null);
   const [formationName, setFormationName] = useState('');
-  const [formationData, setFormationData] = useState<any>(null);
+  const [formationData, setFormationData] = useState<FormationData | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +117,7 @@ export default function TeamTacticsPage() {
     const newY = e.clientY - fieldRect.top - dragOffset.y;
     setFormationData(prev => ({
       ...prev,
-      positions: prev.positions.map((p: any) =>
+      positions: prev.positions.map((p: Position) =>
         p.id === draggingId ? { ...p, x: newX, y: newY } : p
       ),
     }));
@@ -209,7 +221,7 @@ export default function TeamTacticsPage() {
                 onMouseUp={handleFieldMouseUp}
                 onMouseLeave={handleFieldMouseUp}
               >
-                {formationData?.positions?.map((pos: any) => (
+                {formationData?.positions?.map((pos: Position) => (
                   <div
                     key={pos.id}
                     className="absolute circle ba b--dark-blue bg-white blue f5 fw6"
