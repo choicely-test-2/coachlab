@@ -63,3 +63,26 @@
 
 ### Future / Stretch
 - [ ] Mobile app (React Native) — after web feature parity
+
+## Polish / Review Follow-ups
+
+Items identified during PR reviews that are minor but worth addressing later.
+
+### Tactic Board (PR #5)
+- [ ] Replace custom mouse drag with `dnd-kit` for robustness (if UX issues arise)
+- [ ] Add unit/integration tests for API routes (tactics)
+- [ ] Consider server component for tactics list (avoid client fetch)
+
+### Season Planner (PR #7)
+- [ ] Confirm deletion dialog explicitly mentions matches are also deleted
+- [ ] Consider adding a "no matches" empty state illustration
+
+### Achievements (PR #8)
+- [ ] Batch DB queries in `checkAndAwardAchievements` for performance (avoid N+1)
+- [ ] Expand `season_complete` to count seasons of teams where user is a member (not just owner)
+- [ ] Expose `user.points` in session to show on dashboard
+- [ ] Remove unused `totalPoints` variable from dashboard
+- [ ] Achievements page: call Prisma directly instead of API (optional)
+- [ ] Add rate limiting to `/api/me/activity` (future)
+- [ ] Add tests for achievements engine (coverage)
+- [ ] Ensure timezone handling in streak calculation is consistent (UTC)
