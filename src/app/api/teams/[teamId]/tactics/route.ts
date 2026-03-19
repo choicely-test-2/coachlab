@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
+// All endpoints require authentication via NextAuth session cookie.
+// CSRF protection is provided by NextAuth by default.
+// Additionally, we enforce team membership for all data access.
+
 export async function GET(request: NextRequest, { params }: { params: { teamId: string } }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
