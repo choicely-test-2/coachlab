@@ -115,6 +115,37 @@ export default function TeamTacticsPage() {
     setDraggingId(null);
   };
 
+  const loadTactic = (tactic: Tactic) => {
+    setSelectedTactic(tactic);
+    setFormationName(tactic.name);
+    try {
+      const parsed = JSON.parse(tactic.data);
+      setFormationData(parsed);
+    } catch {
+      setFormationData({ positions: [], formation: '' });
+    }
+  };
+
+  const handleDelete = async (tacticId: string) => {
+    if (!window.confirm('Delete this tactic?')) return;
+    try {
+      const res = await fetch(`/api/teams/${teamId}/tactics/${tacticId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setTactics(prev => prev.filter(t => t.id !== tacticId));
+        if (selectedTactic?.id === tacticId) {
+          setSelectedTactic(null);
+          setFormationName('');
+          setFormationData({ positions: [], formation: '' });
+        }
+      } else {
+        alert('Failed to delete tactic');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting tactic');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-light-silver">
       <nav className="bg-white pa3 shadow-1 flex justify-between items-center">
@@ -135,14 +166,21 @@ export default function TeamTacticsPage() {
               ) : error ? (
                 <p className="red">Error: {error}</p>
               ) : (
-                <ul>
+                <ul className="list ma0 pa0">
                   {tactics.map(t => (
-                    <li key={t.id} className="mb2">
+                    <li key={t.id} className="mb2 flex items-center gap-2">
                       <button
                         className={`blue pointer ${selectedTactic?.id === t.id ? 'b fw6' : ''}`}
-                        onClick={() => setSelectedTactic(t)}
+                        onClick={() => loadTactic(t)}
                       >
                         {t.name}
+                      </button>
+                      <button
+                        className="red-70 pointer f7"
+                        onClick={() => handleDelete(t.id)}
+                        title="Delete tactic"
+                      >
+                        ✕
                       </button>
                     </li>
                   ))}
