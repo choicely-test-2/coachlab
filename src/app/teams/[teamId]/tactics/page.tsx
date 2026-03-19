@@ -130,12 +130,7 @@ export default function TeamTacticsPage() {
   const loadTactic = (tactic: Tactic) => {
     setSelectedTactic(tactic);
     setFormationName(tactic.name);
-    try {
-      const parsed = JSON.parse(tactic.data);
-      setFormationData(parsed);
-    } catch {
-      setFormationData({ positions: [], formation: '' });
-    }
+    setFormationData(tactic.data as FormationData);
   };
 
   const handleDelete = async (tacticId: string) => {
@@ -256,7 +251,7 @@ export default function TeamTacticsPage() {
             <div className="mt4 bg-white pa3 br2 shadow-1">
               <h2 className="f5 fw6 mb2">Preview: {selectedTactic.name}</h2>
               <pre className="bg-light-silver pa2 overflow-auto">
-                {JSON.stringify(JSON.parse(selectedTactic.data), null, 2)}
+                {JSON.stringify(selectedTactic.data, null, 2)}
               </pre>
             </div>
           )}

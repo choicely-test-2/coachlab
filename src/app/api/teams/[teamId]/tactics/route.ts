@@ -62,7 +62,7 @@ export async function POST(request: NextRequest, { params }: { params: { teamId:
     data: {
       name,
       description,
-      data: JSON.stringify(data),
+      data,
       teamId: params.teamId,
       createdBy: user.id,
     },
