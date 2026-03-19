@@ -10,7 +10,7 @@
 ## Roadmap (mirrors README.md)
 - [x] Basic tactic board with draggable players
 - [x] Season planner with calendar view
-- [ ] Achievement system (streaks, badges)
+- [x] Achievement system (streaks, badges)
 - [ ] Team sharing and collaboration
 - [ ] Export tactics as images/PDF
 - [ ] Mobile app (React Native)
@@ -37,7 +37,7 @@
 
 ### Gamification Layer
 - [ ] Points system — actions → points, rules table
-- [ ] Achievements engine — badges, trophies, conditions
+- [x] Achievements engine — badges, trophies, conditions
 - [ ] Streak tracking — daily/weekly consistency rewards
 - [ ] Leaderboards — opt-in, privacy-aware, monthly rankings
 - [ ] Quest/challenge system — monthly challenges, completion rewards
