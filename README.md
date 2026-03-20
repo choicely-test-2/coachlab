@@ -58,10 +58,10 @@ Open http://localhost:3000 in your browser.
 - [x] Basic tactic board with draggable players
 - [x] Season planner with calendar view
 - [x] Achievement system (streaks, badges)
-- [ ] Team sharing and collaboration
-- [ ] Export tactics as images/PDF
+- [x] Team sharing and collaboration
+- [x] Export tactics as images/PDF
 - [ ] Mobile app (React Native)
-- [ ] Public tactic library
+- [x] Public tactic library
 
 ## License
 
