@@ -91,3 +91,8 @@ Items identified during PR reviews that are minor but worth addressing later.
 ### Sharing (PR #9)
 - [ ] Implement "TEAM" visibility logic (currently only PRIVATE and PUBLIC functional)
 - [ ] Add tests for visibility endpoints
+
+### Export (PR #10)
+- [ ] Add loading indicator during export (UX improvement)
+- [ ] Consider fitting PDF to standard page size (instead of raw canvas dimensions)
+- [ ] Add telemetry for export usage (for gamification insights later)
