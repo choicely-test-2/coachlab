@@ -87,3 +87,7 @@ Items identified during PR reviews that are minor but worth addressing later.
 - [ ] Add rate limiting to `/api/me/activity` (future)
 - [ ] Add tests for achievements engine (coverage)
 - [ ] Ensure timezone handling in streak calculation is consistent (UTC)
+
+### Sharing (PR #9)
+- [ ] Implement "TEAM" visibility logic (currently only PRIVATE and PUBLIC functional)
+- [ ] Add tests for visibility endpoints
