@@ -1,11 +1,11 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from '@/lib/auth-options';
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 interface PageProps {
-  params: { id: string };
+  params: { teamId: string };
 }
 
 export default async function TeamDetailPage({ params }: PageProps) {
@@ -18,7 +18,7 @@ export default async function TeamDetailPage({ params }: PageProps) {
     );
   }
 
-  const teamId = params.id;
+  const teamId = params.teamId;
 
   // Fetch team with owner and members (including their user profiles)
   const team = await prisma.team.findUnique({

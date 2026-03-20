@@ -7,7 +7,8 @@ interface Tactic {
   id: string;
   name: string;
   description?: string;
-  data: string; // JSON string
+  data: FormationData; // parsed object
+  visibility?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,6 +38,7 @@ export default function TeamTacticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [visibility, setVisibility] = useState<string>('PRIVATE');
 
   // Fetch tactics on load
   useEffect(() => {
@@ -65,18 +67,43 @@ export default function TeamTacticsPage() {
         name: formationName,
         description: '',
         data: formationData || { positions: [], formation: '' },
+        visibility,
       };
-      const res = await fetch(`/api/teams/${teamId}/tactics`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+
+      let res;
+      if (selectedTactic) {
+        // Update existing tactic
+        res = await fetch(`/api/teams/${teamId}/tactics/${selectedTactic.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // Create new tactic
+        res = await fetch(`/api/teams/${teamId}/tactics`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+
       if (res.ok) {
-        const newTactic = await res.json();
-        setTactics(prev => [newTactic, ...prev]);
-        setFormationName('');
-        setFormationData({ positions: [], formation: '' });
-        alert('Tactic saved!');
+        const savedTactic = await res.json();
+        if (selectedTactic) {
+          // Replace in list
+          setTactics(prev => prev.map(t => t.id === savedTactic.id ? savedTactic : t));
+          setSelectedTactic(savedTactic);
+          alert('Tactic updated!');
+        } else {
+          setTactics(prev => [savedTactic, ...prev]);
+          setFormationName('');
+          setFormationData({ positions: [], formation: '' });
+          setVisibility('PRIVATE');
+          alert('Tactic saved!');
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || 'Failed to save');
       }
     } catch (err) {
       console.error(err);
@@ -115,12 +142,15 @@ export default function TeamTacticsPage() {
     const fieldRect = e.currentTarget.getBoundingClientRect();
     const newX = e.clientX - fieldRect.left - dragOffset.x;
     const newY = e.clientY - fieldRect.top - dragOffset.y;
-    setFormationData(prev => ({
-      ...prev,
-      positions: prev.positions.map((p: Position) =>
-        p.id === draggingId ? { ...p, x: newX, y: newY } : p
-      ),
-    }));
+    setFormationData(prev => {
+      if (!prev) return { positions: [], formation: 'custom' };
+      return {
+        ...prev,
+        positions: prev.positions.map((p: Position) =>
+          p.id === draggingId ? { ...p, x: newX, y: newY } : p
+        ),
+      };
+    });
   };
 
   const handleFieldMouseUp = () => {
@@ -130,7 +160,8 @@ export default function TeamTacticsPage() {
   const loadTactic = (tactic: Tactic) => {
     setSelectedTactic(tactic);
     setFormationName(tactic.name);
-    setFormationData(tactic.data as FormationData);
+    setFormationData(tactic.data);
+    setVisibility(tactic.visibility || 'PRIVATE');
   };
 
   const handleDelete = async (tacticId: string) => {
@@ -208,6 +239,18 @@ export default function TeamTacticsPage() {
                   onChange={e => setFormationName(e.target.value)}
                 />
               </div>
+              <div className="mb3">
+                <label className="db fw6 mb1">Visibility</label>
+                <select
+                  className="pa2 br2 ba w-100"
+                  value={visibility}
+                  onChange={e => setVisibility(e.target.value)}
+                >
+                  <option value="PRIVATE">Private</option>
+                  <option value="TEAM">Team</option>
+                  <option value="PUBLIC">Public</option>
+                </select>
+              </div>
               <div
                 className="relative ba bg-green-muted"
                 style={{ width: '100%', height: '400px' }}
@@ -249,7 +292,12 @@ export default function TeamTacticsPage() {
           {/* Selected tactic preview */}
           {selectedTactic && (
             <div className="mt4 bg-white pa3 br2 shadow-1">
-              <h2 className="f5 fw6 mb2">Preview: {selectedTactic.name}</h2>
+              <div className="flex items-center mb2">
+                <h2 className="f5 fw6 mr2">Preview: {selectedTactic.name}</h2>
+                <span className={`pa1 br2 f7 ${selectedTactic.visibility === 'PUBLIC' ? 'bg-green' : selectedTactic.visibility === 'TEAM' ? 'bg-blue' : 'bg-gray'}`}>
+                  {selectedTactic.visibility}
+                </span>
+              </div>
               <pre className="bg-light-silver pa2 overflow-auto">
                 {JSON.stringify(selectedTactic.data, null, 2)}
               </pre>
