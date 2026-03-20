@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 
 // All endpoints require authentication via NextAuth session cookie.
@@ -27,7 +27,13 @@ export async function GET(request: NextRequest, { params }: { params: { teamId: 
     return NextResponse.json({ error: 'Team not found or access denied' }, { status: 404 });
   }
 
-  return NextResponse.json(team.tactics);
+  // Parse the data field from JSON string to object for client convenience
+  const tactics = team.tactics.map(t => ({
+    ...t,
+    data: JSON.parse(t.data as string),
+  }));
+
+  return NextResponse.json(tactics);
 }
 
 export async function POST(request: NextRequest, { params }: { params: { teamId: string } }) {
@@ -56,21 +62,35 @@ export async function POST(request: NextRequest, { params }: { params: { teamId:
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { name, description, data } = body;
+  const { name, description, data, visibility } = body;
 
   if (!name || !data) {
     return NextResponse.json({ error: 'Name and data are required' }, { status: 400 });
   }
 
+  // Validate visibility if provided, default to PRIVATE
+  const validVisibilities = ['PRIVATE', 'TEAM', 'PUBLIC'] as const;
+  const vis = visibility && validVisibilities.includes(visibility) ? visibility : 'PRIVATE';
+
+  // Convert data to JSON string for storage
+  const dataString = typeof data === 'string' ? data : JSON.stringify(data);
+
   const tactic = await prisma.tactic.create({
     data: {
       name,
       description,
-      data,
+      data: dataString,
       teamId: params.teamId,
       createdBy: user.id,
+      visibility: vis,
     },
   });
 
-  return NextResponse.json(tactic, { status: 201 });
+  // Return tactic with parsed data and visibility
+  const responseTactic = {
+    ...tactic,
+    data: JSON.parse(tactic.data as string),
+  };
+
+  return NextResponse.json(responseTactic, { status: 201 });
 }

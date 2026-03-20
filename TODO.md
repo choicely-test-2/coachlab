@@ -6,6 +6,7 @@
 - [x] Basic scaffolding: Next.js + Tachyons + Prisma
 - [x] Git workflow fix: GH_TOKEN in remote
 - [x] Add TODO.md and open PR #3
+- [x] Sharing system — per-tactic privacy controls, public feed (MVP)
 
 ## Roadmap (mirrors README.md)
 - [x] Basic tactic board with draggable players
@@ -44,7 +45,7 @@
 - [ ] Notifications — push/in-app for streaks/new achievements
 
 ### Sharing & Community
-- [ ] Sharing system — per-tactic privacy controls, team sharing
+- [x] Sharing system — per-tactic privacy controls, team sharing
 - [ ] Public tactic library — marketplace/browse, likes, comments
 - [ ] Team collaboration — multi-coach editing, comments
 - [ ] Community status — top contributors featured, peer recognition

@@ -82,9 +82,10 @@ model Tactic {
   id          String   @id @default(cuid())
   name        String
   description String?
-  data        Json
+  data        String
   teamId      String
   createdBy   String
+  visibility  String   @default("PRIVATE")
   team        Team     @relation(fields: [teamId], references: [id])
   exports     Export[]
   createdAt   DateTime @default(now())
