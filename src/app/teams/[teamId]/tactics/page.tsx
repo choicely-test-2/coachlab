@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 
 interface Tactic {
@@ -39,6 +39,7 @@ export default function TeamTacticsPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [visibility, setVisibility] = useState<string>('PRIVATE');
+  const boardRef = useRef<HTMLDivElement>(null);
 
   // Fetch tactics on load
   useEffect(() => {
@@ -184,6 +185,50 @@ export default function TeamTacticsPage() {
     }
   };
 
+  const handleExportPNG = async () => {
+    if (!boardRef.current) {
+      alert('No tactic board to export');
+      return;
+    }
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const board = boardRef.current;
+      const canvas = await html2canvas(board, { scale: 2, backgroundColor: '#f0f0f0' });
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `tactic-${formationName || 'unnamed'}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to export PNG');
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!boardRef.current) {
+      alert('No tactic board to export');
+      return;
+    }
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      const board = boardRef.current;
+      const canvas = await html2canvas(board, { scale: 2, backgroundColor: '#f0f0f0' });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height],
+      });
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`tactic-${formationName || 'unnamed'}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to export PDF');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-light-silver">
       <nav className="bg-white pa3 shadow-1 flex justify-between items-center">
@@ -252,6 +297,7 @@ export default function TeamTacticsPage() {
                 </select>
               </div>
               <div
+                ref={boardRef}
                 className="relative ba bg-green-muted"
                 style={{ width: '100%', height: '400px' }}
                 onClick={handleFieldClick}
@@ -279,13 +325,31 @@ export default function TeamTacticsPage() {
                 ))}
                 <div className="absolute bottom-1 right-1 f7 mid-gray">Click to add player; drag to move</div>
               </div>
-              <button
-                className="mt3 bg-dark-blue white bn br2 ph3 pv2 pointer"
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? 'Saving...' : 'Save Tactic'}
-              </button>
+              <div className="mt3 flex items-center gap-2">
+                <button
+                  className="bg-dark-blue white bn br2 ph3 pv2 pointer"
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Save Tactic'}
+                </button>
+                {formationData && formationData.positions && formationData.positions.length > 0 && (
+                  <>
+                    <button
+                      className="bg-dark-gray white bn br2 ph3 pv2 pointer"
+                      onClick={handleExportPNG}
+                    >
+                      Export PNG
+                    </button>
+                    <button
+                      className="bg-dark-gray white bn br2 ph3 pv2 pointer"
+                      onClick={handleExportPDF}
+                    >
+                      Export PDF
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
