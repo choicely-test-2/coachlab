@@ -23,7 +23,7 @@
 ## Backlog (Detailed breakdown)
 
 ### Foundation
-- [ ] Authentication (email + OAuth) — NextAuth.js setup
+- [x] Authentication (email + OAuth) — NextAuth.js with Credentials provider (bcrypt) and OAuth
 - [ ] User profiles and roles (coach, admin, viewer)
 - [ ] Database schema refinement (tactics, sessions, achievements)
 - [ ] PWA configuration (manifest, service worker) — mobile experience
