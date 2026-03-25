@@ -95,9 +95,9 @@ export default async function TeamDetailPage({ params }: PageProps) {
           <div className="mt4 bg-white pa3 br2 shadow-1">
             <h3 className="f5 fw6 mb2">Quick Actions</h3>
             <div className="flex flex-wrap gap2">
-              <button className="bg-green white bn br2 ph3 pv2 pointer">New Tactic</button>
-              <button className="bg-yellow black bn br2 ph3 pv2 pointer">Plan Season</button>
-              <button className="bg-purple white bn br2 ph3 pv2 pointer">View Stats</button>
+              <a href={`/teams/${team.id}/tactics`} className="bg-green white bn br2 ph3 pv2 pointer no-underline">New Tactic</a>
+              <a href={`/teams/${team.id}/season`} className="bg-yellow black bn br2 ph3 pv2 pointer no-underline">Plan Season</a>
+              <a href={`/teams/${team.id}/sessions`} className="bg-blue white bn br2 ph3 pv2 pointer no-underline">Sessions</a>
             </div>
           </div>
         </div>
