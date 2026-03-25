@@ -14,7 +14,7 @@ export default async function TeamsPage() {
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { email: session.user.email! },
     include: {
       userTeams: {
         include: { team: true },

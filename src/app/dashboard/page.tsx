@@ -25,7 +25,7 @@ export default async function Dashboard() {
   });
   // For now, we'll call prisma directly to avoid fetch complexities
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { email: session.user.email! },
     include: {
       userTeams: {
         include: { team: true },
