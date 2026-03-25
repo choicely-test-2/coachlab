@@ -77,8 +77,7 @@ describe('GET /api/tactics/public', () => {
 
     (prisma.tactic.findMany as any).mockResolvedValue([mockTactics[0]]); // only first is PUBLIC
 
-    const request = new NextRequest('http://localhost/api/tactics/public');
-    const response = await getPublicTactics(request);
+    const response = await getPublicTactics();
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -91,8 +90,7 @@ describe('GET /api/tactics/public', () => {
   it('handles database errors', async () => {
     (prisma.tactic.findMany as any).mockRejectedValue(new Error('DB error'));
 
-    const request = new NextRequest('http://localhost/api/tactics/public');
-    const response = await getPublicTactics(request);
+    const response = await getPublicTactics();
 
     expect(response.status).toBe(500);
     const data = await response.json();

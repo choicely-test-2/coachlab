@@ -215,9 +215,12 @@ export default function TeamTacticsPage() {
       link.click();
 
       // Record export and award points
-      await fetch(`/api/teams/${teamId}/tactics/${selectedTactic?.id || ''}/export`, {
+      const res = await fetch(`/api/teams/${teamId}/tactics/${selectedTactic?.id || ''}/export`, {
         method: 'POST',
-      }).catch(err => console.error('Failed to record export:', err));
+      });
+      if (!res.ok) {
+        alert('Failed to record export');
+      }
     } catch (err) {
       console.error(err);
       alert('Failed to export PNG');
@@ -247,9 +250,12 @@ export default function TeamTacticsPage() {
       pdf.save(`tactic-${formationName || 'unnamed'}.pdf`);
 
       // Record export and award points
-      await fetch(`/api/teams/${teamId}/tactics/${selectedTactic?.id || ''}/export`, {
+      const res = await fetch(`/api/teams/${teamId}/tactics/${selectedTactic?.id || ''}/export`, {
         method: 'POST',
-      }).catch(err => console.error('Failed to record export:', err));
+      });
+      if (!res.ok) {
+        alert('Failed to record export');
+      }
     } catch (err) {
       console.error(err);
       alert('Failed to export PDF');

@@ -87,14 +87,19 @@ export async function POST(request: NextRequest, { params }: { params: { teamId:
     },
   });
 
-  // Award 10 points for creating a tactic
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { points: { increment: 10 } },
-  });
+  try {
+    // Award 10 points for creating a tactic
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { points: { increment: 10 } },
+    });
 
-  // Record activity for streak tracking
-  await incrementUserActivity(user.id).catch(err => console.error('Failed to increment activity:', err));
+    // Record activity for streak tracking
+    await incrementUserActivity(user.id);
+  } catch (error) {
+    console.error('Failed to award points or update activity for tactic creation:', error);
+    return NextResponse.json({ error: 'Failed to complete tactic creation due to server error' }, { status: 500 });
+  }
 
   // Return tactic with parsed data and visibility
   const responseTactic = {

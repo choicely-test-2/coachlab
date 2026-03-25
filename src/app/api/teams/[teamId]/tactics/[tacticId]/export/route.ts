@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
@@ -35,22 +35,27 @@ export async function POST(
     return NextResponse.json({ error: 'Access denied' }, { status: 403 });
   }
 
-  // Create export record
-  await prisma.export.create({
-    data: {
-      userId: user.id,
-      tacticId: params.tacticId,
-    },
-  });
+  try {
+    // Create export record
+    await prisma.export.create({
+      data: {
+        userId: user.id,
+        tacticId: params.tacticId,
+      },
+    });
 
-  // Award 5 points for exporting a tactic
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { points: { increment: 5 } },
-  });
+    // Award 5 points for exporting a tactic
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { points: { increment: 5 } },
+    });
 
-  // Record activity for streak tracking
-  await incrementUserActivity(user.id).catch(err => console.error('Failed to increment activity:', err));
+    // Record activity for streak tracking
+    await incrementUserActivity(user.id);
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to export tactic:', error);
+    return NextResponse.json({ error: 'Failed to record export' }, { status: 500 });
+  }
 }
