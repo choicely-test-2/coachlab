@@ -213,6 +213,14 @@ export default function TeamTacticsPage() {
       link.download = `tactic-${formationName || 'unnamed'}.png`;
       link.href = dataUrl;
       link.click();
+
+      // Record export and award points
+      const res = await fetch(`/api/teams/${teamId}/tactics/${selectedTactic?.id || ''}/export`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        alert('Failed to record export');
+      }
     } catch (err) {
       console.error(err);
       alert('Failed to export PNG');
@@ -240,6 +248,14 @@ export default function TeamTacticsPage() {
       });
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
       pdf.save(`tactic-${formationName || 'unnamed'}.pdf`);
+
+      // Record export and award points
+      const res = await fetch(`/api/teams/${teamId}/tactics/${selectedTactic?.id || ''}/export`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        alert('Failed to record export');
+      }
     } catch (err) {
       console.error(err);
       alert('Failed to export PDF');
@@ -352,7 +368,7 @@ export default function TeamTacticsPage() {
                 >
                   {saving ? 'Saving...' : 'Save Tactic'}
                 </button>
-                {formationData && formationData.positions && formationData.positions.length > 0 && (
+                {selectedTactic && formationData && formationData.positions && formationData.positions.length > 0 && (
                   <>
                     <button
                       className="bg-dark-gray white bn br2 ph3 pv2 pointer"

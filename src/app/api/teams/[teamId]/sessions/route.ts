@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { incrementUserActivity } from '@/lib/achievements';
 
 // GET /api/teams/[teamId]/sessions
 // List sessions for a team (accessible to team members only)
@@ -83,6 +84,20 @@ export async function POST(request: NextRequest, { params }: { params: { teamId:
       coach: { select: { name: true, email: true } },
     },
   });
+
+  try {
+    // Award 20 points for completing a practice session
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { points: { increment: 20 } },
+    });
+
+    // Record activity for streak tracking
+    await incrementUserActivity(user.id);
+  } catch (error) {
+    console.error('Failed to award points or update activity for session creation:', error);
+    return NextResponse.json({ error: 'Failed to complete session creation due to server error' }, { status: 500 });
+  }
 
   return NextResponse.json(newSession, { status: 201 });
 }

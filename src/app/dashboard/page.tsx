@@ -19,11 +19,7 @@ export default async function Dashboard() {
   });
   const userAchievements = achievementsRes.ok ? await achievementsRes.json() : [];
 
-  // Fetch user's teams
-  const teamsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/teams`, {
-    headers: { 'Cookie': '' }, // avoid sending cookies, but in server component we need credentials? Actually fetch in server component uses node-fetch and can include cookies automatically if we pass credentials: 'include'. Simpler: call prisma directly? Or we can use getServerSession and query prisma directly here. Let's avoid extra fetch and just use prisma on server.
-  });
-  // For now, we'll call prisma directly to avoid fetch complexities
+  // Use prisma directly to fetch user with points and streak
   const user = await prisma.user.findUnique({
     where: { email: session.user.email! },
     include: {
@@ -39,8 +35,10 @@ export default async function Dashboard() {
 
   // Show top 3 achievements (or all if less)
   const displayedAchievements = userAchievements.slice(0, 3);
-  // totalPoints placeholder
-  const totalPoints = (session.user as any).points ?? 0;
+
+  // Get points and streak from user
+  const totalPoints = user?.points ?? 0;
+  const currentStreak = user?.currentStreak ?? 0;
 
   return (
     <div className="min-h-screen bg-light-silver">
@@ -85,6 +83,18 @@ export default async function Dashboard() {
               ) : (
                 <p className="mt3 f7 red">Create a team first</p>
               )}
+            </div>
+            {/* Stats Card */}
+            <div className="bg-white pa3 br2 shadow-1">
+              <h3 className="f5 fw6 mb2">Your Stats</h3>
+              <div className="mb2">
+                <span className="f6 silver">Total Points:</span>
+                <span className="f6 blue ml1">{totalPoints}</span>
+              </div>
+              <div>
+                <span className="f6 silver">Current Streak:</span>
+                <span className="f6 ml1">{currentStreak > 0 ? `🔥 ${currentStreak}-day streak` : 'No streak yet'}</span>
+              </div>
             </div>
           </div>
 
