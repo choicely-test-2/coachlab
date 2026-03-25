@@ -4,6 +4,7 @@ export async function incrementUserActivity(userId: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // Upsert user activity for today
   await prisma.userActivity.upsert({
     where: {
       userId_date: {
@@ -22,6 +23,50 @@ export async function incrementUserActivity(userId: string) {
       actionCount: 1,
     },
   });
+
+  // Update streak: fetch user's current streak and lastActivityDate
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { currentStreak: true, lastActivityDate: true },
+  });
+
+  if (!user) {
+    console.error(`User not found: ${userId}`);
+    return;
+  }
+
+  const todayStr = today.toISOString().split('T')[0];
+  const lastAct = user.lastActivityDate;
+  let newStreak = user.currentStreak;
+
+  if (lastAct) {
+    const lastActStr = lastAct.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    if (lastActStr === todayStr) {
+      // Already active today, streak unchanged
+    } else if (lastActStr === yesterdayStr) {
+      // Consecutive day: increment streak
+      newStreak += 1;
+    } else {
+      // Gap: reset streak to 1
+      newStreak = 1;
+    }
+  } else {
+    // First activity: streak = 1
+    newStreak = 1;
+  }
+
+  // Update user's streak and lastActivityDate
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      currentStreak: newStreak,
+      lastActivityDate: today,
+    },
+  });
 }
 
 export async function checkAndAwardAchievements(userId: string) {
@@ -35,6 +80,9 @@ export async function checkAndAwardAchievements(userId: string) {
   });
 
   const uaMap = new Map(userAchievements.map(ua => [ua.achievementId, ua]));
+
+  // Fetch user to get currentStreak (for streak achievement)
+  const user = await prisma.user.findUnique({ where: { id: userId } });
 
   // Helper to compute progress for each type
   const computeProgress = async (req: any): Promise<number> => {
@@ -84,40 +132,8 @@ export async function checkAndAwardAchievements(userId: string) {
       }
 
       case 'streak_days': {
-        const threshold = req.threshold ?? 7;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const fromDate = new Date(today);
-        fromDate.setDate(fromDate.getDate() - (threshold + 1));
-
-        const activities = await prisma.userActivity.findMany({
-          where: {
-            userId,
-            date: { gte: fromDate },
-          },
-          orderBy: { date: 'desc' },
-        });
-
-        const activityMap = new Map<string, number>();
-        for (const act of activities) {
-          const dateKey = act.date.toISOString().split('T')[0];
-          activityMap.set(dateKey, act.actionCount);
-        }
-
-        let streak = 0;
-        let current = new Date(today);
-        while (true) {
-          const dateKey = current.toISOString().split('T')[0];
-          const count = activityMap.get(dateKey) ?? 0;
-          if (count > 0) {
-            streak++;
-            current.setDate(current.getDate() - 1);
-          } else {
-            break;
-          }
-          if (streak >= threshold) break;
-        }
-        return streak;
+        // Use the currentStreak from the user record directly
+        return user?.currentStreak ?? 0;
       }
 
       default:

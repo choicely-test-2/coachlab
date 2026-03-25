@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { incrementUserActivity } from '@/lib/achievements';
 
 // All endpoints require authentication via NextAuth session cookie.
 // CSRF protection is provided by NextAuth by default.
@@ -85,6 +86,15 @@ export async function POST(request: NextRequest, { params }: { params: { teamId:
       visibility: vis,
     },
   });
+
+  // Award 10 points for creating a tactic
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { points: { increment: 10 } },
+  });
+
+  // Record activity for streak tracking
+  await incrementUserActivity(user.id).catch(err => console.error('Failed to increment activity:', err));
 
   // Return tactic with parsed data and visibility
   const responseTactic = {

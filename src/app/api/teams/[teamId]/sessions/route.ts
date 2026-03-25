@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { incrementUserActivity } from '@/lib/achievements';
 
 // GET /api/teams/[teamId]/sessions
 // List sessions for a team (accessible to team members only)
@@ -83,6 +84,15 @@ export async function POST(request: NextRequest, { params }: { params: { teamId:
       coach: { select: { name: true, email: true } },
     },
   });
+
+  // Award 20 points for completing a practice session
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { points: { increment: 20 } },
+  });
+
+  // Record activity for streak tracking
+  await incrementUserActivity(user.id).catch(err => console.error('Failed to increment activity:', err));
 
   return NextResponse.json(newSession, { status: 201 });
 }
