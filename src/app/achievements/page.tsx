@@ -8,7 +8,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function AchievementsPage() {
   const session = await getServerSession(authOptions);
+  console.log('[AchievementsPage] session.user?.email:', session?.user?.email);
+  console.log('[AchievementsPage] session existence:', !!session);
   if (!session || !session.user) {
+    console.log('Redirecting to sign-in because no session');
     redirect('/api/auth/signin?callbackUrl=/achievements');
   }
 
