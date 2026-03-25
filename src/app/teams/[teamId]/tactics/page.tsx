@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { useDraggable, useDroppable, DndContext, DragStartEvent, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { useDroppable, DndContext, DragStartEvent, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import PlayerDot from '@/components/PlayerDot';
 
 interface Tactic {
   id: string;
@@ -337,37 +338,9 @@ export default function TeamTacticsPage() {
                   style={{ width: '100%', height: '400px' }}
                   onClick={handleFieldClick}
                 >
-                  {formationData?.positions?.map((pos: Position) => {
-                    const draggable = useDraggable({
-                      id: pos.id,
-                      data: { type: 'player', pos },
-                    });
-                    return (
-                      <div
-                        key={pos.id}
-                        ref={draggable.setNodeRef}
-                        {...draggable.attributes}
-                        {...draggable.listeners}
-                        className="absolute circle ba b--dark-blue bg-white blue f5 fw6"
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          left: pos.x - 16,
-                          top: pos.y - 16,
-                          cursor: 'move',
-                          zIndex: draggable.isDragging ? 10 : 1,
-                          opacity: draggable.isDragging ? 0.8 : 1,
-                          transform: draggable.transform
-                            ? `translate3d(${draggable.transform.x}px, ${draggable.transform.y}px, 0)`
-                            : undefined,
-                          touchAction: 'none', // important for pointer events
-                        }}
-                      >
-                        {pos.label}
-                      </div>
-                    );
-                  })}
+                  {formationData?.positions?.map((pos: Position) => (
+                    <PlayerDot key={pos.id} pos={pos} />
+                  ))}
                   <div className="absolute bottom-1 right-1 f7 mid-gray">Click to add player; drag to move</div>
                 </div>
               </DndContext>
