@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 

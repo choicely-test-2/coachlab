@@ -362,7 +362,7 @@ export default function TeamTacticsPage() {
                 >
                   {saving ? 'Saving...' : 'Save Tactic'}
                 </button>
-                {formationData && formationData.positions && formationData.positions.length > 0 && (
+                {selectedTactic && formationData && formationData.positions && formationData.positions.length > 0 && (
                   <>
                     <button
                       className="bg-dark-gray white bn br2 ph3 pv2 pointer"
