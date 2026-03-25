@@ -70,6 +70,87 @@ async function main() {
       console.log(`Achievement already exists: ${achievement.name}`);
     }
   }
+
+  // Seed tactics with different visibilities for testing
+  // Find a user to be the creator
+  const user = await prisma.user.findFirst();
+  if (!user) {
+    console.log('No user found, skipping tactic seeding');
+    return;
+  }
+
+  // Find or create a team for this user
+  let team = await prisma.team.findFirst({
+    where: { ownerId: user.id },
+  });
+
+  if (!team) {
+    team = await prisma.team.create({
+      data: {
+        name: 'Test Team',
+        description: 'A team for testing',
+        ownerId: user.id,
+      },
+    });
+    console.log(`Created team: ${team.name}`);
+  }
+
+  // Ensure user is a member of the team
+  await prisma.userTeam.upsert({
+    where: {
+      userId_teamId: {
+        userId: user.id,
+        teamId: team.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: user.id,
+      teamId: team.id,
+      role: 'owner',
+    },
+  });
+
+  // Seed tactics with different visibilities if none exist
+  const existingTacticsCount = await prisma.tactic.count({
+    where: { teamId: team.id },
+  });
+
+  if (existingTacticsCount === 0) {
+    const tacticData = [
+      {
+        name: 'Private Formation',
+        description: 'A private tactic',
+        data: JSON.stringify({ positions: [{ id: '1', x: 50, y: 50, label: 'P' }], formation: 'custom' }),
+        visibility: 'PRIVATE' as const,
+      },
+      {
+        name: 'Team Tactic',
+        description: 'A team-visible tactic',
+        data: JSON.stringify({ positions: [{ id: '2', x: 100, y: 100, label: 'P' }], formation: '4-4-2' }),
+        visibility: 'TEAM' as const,
+      },
+      {
+        name: 'Public Strategy',
+        description: 'A public tactic',
+        data: JSON.stringify({ positions: [{ id: '3', x: 150, y: 150, label: 'P' }], formation: '3-5-2' }),
+        visibility: 'PUBLIC' as const,
+      },
+    ];
+
+    for (const tactic of tacticData) {
+      await prisma.tactic.create({
+        data: {
+          ...tactic,
+          teamId: team.id,
+          createdBy: user.id,
+        },
+      });
+      console.log(`Created tactic: ${tactic.name} (${tactic.visibility})`);
+    }
+  } else {
+    console.log(`Team already has ${existingTacticsCount} tactics, skipping seeding`);
+  }
 }
 
 main()
@@ -80,3 +161,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

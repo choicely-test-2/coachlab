@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import { useDraggable, useDroppable, DndContext, DragStartEvent, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 
 interface Tactic {
   id: string;
@@ -36,10 +37,19 @@ export default function TeamTacticsPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [visibility, setVisibility] = useState<string>('PRIVATE');
-  const boardRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null);
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const initialPositions = useRef<Record<string, { x: number; y: number }>>({});
+
+  // Configure sensors for drag
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // 5px movement to start drag, helps differentiate click
+      },
+    })
+  );
 
   // Fetch tactics on load
   useEffect(() => {
@@ -114,9 +124,41 @@ export default function TeamTacticsPage() {
     }
   };
 
-  // Basic drag-and-drop: click to add player, drag to move
+  // DnD callbacks
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const pos = formationData?.positions.find(p => p.id === active.id);
+    if (pos) {
+      initialPositions.current[active.id as string] = { x: pos.x, y: pos.y };
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over, delta } = event;
+    if (over && over.id === 'board' && formationData) {
+      const initial = initialPositions.current[active.id as string];
+      if (initial) {
+        const newX = initial.x + delta.x;
+        const newY = initial.y + delta.y;
+        setFormationData(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            positions: prev.positions.map(p =>
+              p.id === active.id ? { ...p, x: newX, y: newY } : p
+            ),
+          };
+        });
+      }
+    }
+    initialPositions.current = {};
+  };
+
+  // Board click: add player only if not dragging
   const handleFieldClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (draggingId) return;
+    // If a drag just ended or is in progress, ignore click
+    // dnd-kit prevents click after drag, but we add extra guard by checking event.detail (0 if programmatic)
+    if (e.detail === 0) return;
     if (!formationData) setFormationData({ positions: [], formation: 'custom' });
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -126,36 +168,6 @@ export default function TeamTacticsPage() {
       ...prev,
       positions: [...(prev?.positions || []), newPos],
     }));
-  };
-
-  const handlePlayerMouseDown = (e: React.MouseEvent, pos: any) => {
-    e.stopPropagation();
-    const playerRect = (e.target as HTMLElement).getBoundingClientRect();
-    setDraggingId(pos.id);
-    setDragOffset({
-      x: e.clientX - playerRect.left,
-      y: e.clientY - playerRect.top,
-    });
-  };
-
-  const handleFieldMouseMove = (e: React.MouseEvent) => {
-    if (!draggingId || !formationData) return;
-    const fieldRect = e.currentTarget.getBoundingClientRect();
-    const newX = e.clientX - fieldRect.left - dragOffset.x;
-    const newY = e.clientY - fieldRect.top - dragOffset.y;
-    setFormationData(prev => {
-      if (!prev) return { positions: [], formation: 'custom' };
-      return {
-        ...prev,
-        positions: prev.positions.map((p: Position) =>
-          p.id === draggingId ? { ...p, x: newX, y: newY } : p
-        ),
-      };
-    });
-  };
-
-  const handleFieldMouseUp = () => {
-    setDraggingId(null);
   };
 
   const loadTactic = (tactic: Tactic) => {
@@ -190,6 +202,7 @@ export default function TeamTacticsPage() {
       alert('No tactic board to export');
       return;
     }
+    setExporting('png');
     try {
       const html2canvas = (await import('html2canvas')).default;
       const board = boardRef.current;
@@ -202,6 +215,8 @@ export default function TeamTacticsPage() {
     } catch (err) {
       console.error(err);
       alert('Failed to export PNG');
+    } finally {
+      setExporting(null);
     }
   };
 
@@ -210,6 +225,7 @@ export default function TeamTacticsPage() {
       alert('No tactic board to export');
       return;
     }
+    setExporting('pdf');
     try {
       const html2canvas = (await import('html2canvas')).default;
       const { jsPDF } = await import('jspdf');
@@ -226,8 +242,16 @@ export default function TeamTacticsPage() {
     } catch (err) {
       console.error(err);
       alert('Failed to export PDF');
+    } finally {
+      setExporting(null);
     }
   };
+
+  // Droppable board setup
+  const droppable = useDroppable({
+    id: 'board',
+    data: { type: 'board' },
+  });
 
   return (
     <div className="min-h-screen bg-light-silver">
@@ -296,35 +320,57 @@ export default function TeamTacticsPage() {
                   <option value="PUBLIC">Public</option>
                 </select>
               </div>
-              <div
-                ref={boardRef}
-                className="relative ba bg-green-muted"
-                style={{ width: '100%', height: '400px' }}
-                onClick={handleFieldClick}
-                onMouseMove={handleFieldMouseMove}
-                onMouseUp={handleFieldMouseUp}
-                onMouseLeave={handleFieldMouseUp}
+              <DndContext
+                sensors={sensors}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
               >
-                {formationData?.positions?.map((pos: Position) => (
-                  <div
-                    key={pos.id}
-                    className="absolute circle ba b--dark-blue bg-white blue f5 fw6"
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      left: pos.x - 16,
-                      top: pos.y - 16,
-                      cursor: 'move',
-                      zIndex: draggingId === pos.id ? 10 : 1,
-                    }}
-                    onMouseDown={(e) => handlePlayerMouseDown(e, pos)}
-                  >
-                    {pos.label}
-                  </div>
-                ))}
-                <div className="absolute bottom-1 right-1 f7 mid-gray">Click to add player; drag to move</div>
-              </div>
+                <div
+                  ref={node => {
+                    boardRef.current = node;
+                    droppable.setNodeRef(node);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Tactic board"
+                  className="relative ba bg-green-muted"
+                  style={{ width: '100%', height: '400px' }}
+                  onClick={handleFieldClick}
+                >
+                  {formationData?.positions?.map((pos: Position) => {
+                    const draggable = useDraggable({
+                      id: pos.id,
+                      data: { type: 'player', pos },
+                    });
+                    return (
+                      <div
+                        key={pos.id}
+                        ref={draggable.setNodeRef}
+                        {...draggable.attributes}
+                        {...draggable.listeners}
+                        className="absolute circle ba b--dark-blue bg-white blue f5 fw6"
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          left: pos.x - 16,
+                          top: pos.y - 16,
+                          cursor: 'move',
+                          zIndex: draggable.isDragging ? 10 : 1,
+                          opacity: draggable.isDragging ? 0.8 : 1,
+                          transform: draggable.transform
+                            ? `translate3d(${draggable.transform.x}px, ${draggable.transform.y}px, 0)`
+                            : undefined,
+                          touchAction: 'none', // important for pointer events
+                        }}
+                      >
+                        {pos.label}
+                      </div>
+                    );
+                  })}
+                  <div className="absolute bottom-1 right-1 f7 mid-gray">Click to add player; drag to move</div>
+                </div>
+              </DndContext>
               <div className="mt3 flex items-center gap-2">
                 <button
                   className="bg-dark-blue white bn br2 ph3 pv2 pointer"
@@ -338,14 +384,16 @@ export default function TeamTacticsPage() {
                     <button
                       className="bg-dark-gray white bn br2 ph3 pv2 pointer"
                       onClick={handleExportPNG}
+                      disabled={exporting !== null}
                     >
-                      Export PNG
+                      {exporting === 'png' ? 'Exporting PNG...' : 'Export PNG'}
                     </button>
                     <button
                       className="bg-dark-gray white bn br2 ph3 pv2 pointer"
                       onClick={handleExportPDF}
+                      disabled={exporting !== null}
                     >
-                      Export PDF
+                      {exporting === 'pdf' ? 'Exporting PDF...' : 'Export PDF'}
                     </button>
                   </>
                 )}
